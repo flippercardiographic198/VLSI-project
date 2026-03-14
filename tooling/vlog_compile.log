@@ -1,0 +1,24 @@
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+C:/altera/13.1/modelsim_ase/win32aloem/vlog.exe -work work -l ./vlog_compile.log -override_timescale 1 ps / 1 ps ../src/simulation/tb_DE0_TOP.v ../src/synthesis/modules/m21_dataflow.v ../src/synthesis/modules/red.v ../src/synthesis/modules/debouncer.v ../src/synthesis/modules/bcd.v ../src/synthesis/modules/ssd.v ../src/synthesis/modules/alu.v ../src/synthesis/modules/register.v ../src/synthesis/modules/clk_div.v ../src/synthesis/modules/memory.v ../src/synthesis/modules/cpu.v ../src/synthesis/modules/top.v ../src/synthesis/DE0_CV_TOP.v ../src/synthesis/DE0_TOP.v 
+-- Compiling module tb_DE0_TOP
+-- Compiling module m21_dataflow
+-- Compiling module red
+-- Compiling module debouncer
+-- Compiling module bcd
+-- Compiling module ssd
+-- Compiling module alu
+-- Compiling module register
+-- Compiling module clk_div
+-- Compiling module memory
+-- Compiling module cpu
+-- Compiling module top
+-- Compiling module DE0_CV_TOP
+-- Compiling module DE0_TOP
+
+Top level modules:
+	tb_DE0_TOP
+	m21_dataflow
+	red
+	debouncer
+	DE0_CV_TOP
+	DE0_TOP
