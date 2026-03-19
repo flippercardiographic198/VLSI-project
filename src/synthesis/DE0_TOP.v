@@ -192,14 +192,16 @@ module DE0_TOP (CLOCK_50,
     //  Structural coding
     // ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  == 
     
-    top #(  .DIVISOR(10_000_000),
+    top #(  .DIVISOR(50_000_000),
             .FILE_NAME("mem_init.mif"),
             .DATA_WIDTH(16),
             .ADDR_WIDTH(6)) top_inst(
         .clk(CLOCK_50),
         .rst_n(SW[9]),
+        .kbd({PS2_KBDAT,PS2_KBCLK}),
         .btn(~BUTTON[2:0]),
         .sw(SW[8:0]),
+        .mnt({VGA_HS,VGA_VS,VGA_R,VGA_G,VGA_B}),
         .led(LEDG[9:0]),
         .hex({HEX0_D,HEX1_D,HEX2_D,HEX3_D})
     );

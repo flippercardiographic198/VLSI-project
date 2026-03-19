@@ -6,6 +6,8 @@ module cpu #(
     input rst_n,
     input [DATA_WIDTH-1:0]mem,
     input [DATA_WIDTH-1:0]in,
+    input control,
+    output status,
     output we,
     output [ADDR_WIDTH-1:0]addr,
     output [DATA_WIDTH-1:0]data,
@@ -43,7 +45,9 @@ module cpu #(
     reg [DATA_WIDTH-1:0]out_reg_next;
     reg we_reg;
     reg we_reg_next;
-
+    reg status_reg;
+    reg status_reg_next;
+    reg control_reg;
 
     wire [ADDR_WIDTH-1:0]pc_wire;
     wire [ADDR_WIDTH-1:0]sp_wire;
@@ -59,6 +63,7 @@ module cpu #(
     assign we=we_reg;
     assign addr=mar_wire;
     assign data=mdr_wire;
+    assign status=status_reg;
 
     register#(.DATA_WIDTH(6)) register_pc(
         .clk(clk),
@@ -94,8 +99,8 @@ module cpu #(
     register#(.DATA_WIDTH(16)) register_mdr(clk,rst_n,cl_trigger[5],ld_trigger[5],mdr_in,inc_trigger[5],dec_trigger[5],sr_trigger[5],ir_trigger[5],sl_trigger[5],il_trigger[5],mdr_wire);
     register#(.DATA_WIDTH(16)) register_a(clk,rst_n,cl_trigger[6],ld_trigger[6],acc_in,inc_trigger[6],dec_trigger[6],sr_trigger[6],ir_trigger[6],sl_trigger[6],il_trigger[6],acc_wire);
 
-    reg [DATA_WIDTH-1:0]mdr_reg;
-    reg [DATA_WIDTH-1:0]mdr_reg_seq;
+    reg [DATA_WIDTH-1:0]temporary_reg;
+    reg [DATA_WIDTH-1:0]temporary_reg_seq;
 
     localparam MOV=4'b0000;
     localparam ADD=4'b0001;
@@ -107,7 +112,7 @@ module cpu #(
     localparam STOP=4'b1111;
     localparam DIR=1'b0;
     localparam IND=1'b1;
-    localparam BEG=4'b0101;//MODIFIKACIJA
+    localparam BEG=4'b0101;
 
     wire[2:0]operand_1;
     wire operand_1_adr;
@@ -122,7 +127,6 @@ module cpu #(
     reg[3:0] operand_1_full_seq;
     reg[3:0] operand_2_full_seq;
     reg[3:0] operand_3_full_seq;
-//    reg[15:0] operand_4;
     reg[3:0] operation_code;
     reg[3:0] operation_code_seq;
 
@@ -148,7 +152,6 @@ module cpu #(
     assign operand_3_adr=operand_3_full[3];
 
     reg[7:0] state_reg,state_reg_next;
-    reg status_reg,status_reg_next;
 
     localparam MEMORY_DIRECT_ADR=1'b0;
     localparam MEMORY_INDIRECT_ADR=1'b1;
@@ -180,43 +183,6 @@ module cpu #(
     localparam EXEC_STATE_MOV_IND_1_WAIT=22;
     localparam EXEC_STATE_MOV_DST_IND_1_WAIT=23;
 
- //   localparam EXEC_STATE_MOV_FETCH_IR_LOW=110;       //MOV MOD
- //   localparam EXEC_STATE_MOV_FETCH_IR_LOW_2=111;     //MOV MOD
- //   localparam EXEC_STATE_MOV_FETCH_IR_LOW_3=112;     //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED=113;     //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_DIR=114;     //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_DIR_WR=115;      //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_IND=116;     //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_IND_2=117;       //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_IND_3=118;       //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_IND_WAIT=119;        //MOV MOD
- //   localparam EXEC_STATE_MOV_TWO_WORDED_IND_WR=120;      //MOV MOD
-
-    localparam EXEC_STATE_BEG=110;
-    localparam EXEC_STATE_BEG_BOTH=111;
-    localparam EXEC_STATE_BEG_BOTH_DIR_OP1=112;
-    localparam EXEC_STATE_BEG_BOTH_DIR_OP1_2=113;
-    localparam EXEC_STATE_BEG_BOTH_DIR_OP1_WAIT=114;
-    localparam EXEC_STATE_BEG_BOTH_DIR_OP2=115;
-    localparam EXEC_STATE_BEG_BOTH_DIR_OP2_WAIT=116;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP1=117;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP1_2=118;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP1_3=119;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP1_3_WAIT=120;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP1_4=121;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP1_WAIT=122;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP2=123;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP2_2=124;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP2_3=125;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP2_3_WAIT=126;
-    localparam EXEC_STATE_BEG_BOTH_IND_OP2_WAIT=127;
-    localparam EXEC_STATE_BEG_BOTH_JUMP=128;
-    localparam EXEC_STATE_BEG_BOTH_OP2=129;
-    localparam EXEC_STATE_BEG_CHECK=130;
-    localparam EXEC_STATE_BEG_FETCH=131;
-    localparam EXEC_STATE_BEG_FETCH_1=132;
-    localparam EXEC_STATE_BEG_FETCH_2=133;
-
     localparam EXEC_STATE_ALU=30;
     localparam EXEC_STATE_ALU_EXEC=31;
     localparam EXEC_STATE_ALU_IND_WRITE_1=32;
@@ -231,21 +197,21 @@ module cpu #(
     localparam EXEC_STATE_ALU_OPERAND_2_IND_1=41;
     localparam EXEC_STATE_ALU_OPERAND_2_IND_2=42;
     localparam EXEC_STATE_ALU_OPERAND_2_DIR_3=43;
-    localparam EXEC_STATE_ALU_OPERAND_1_DIR_1_WAIT=45;////
-    localparam EXEC_STATE_ALU_OPERAND_2_DIR_1_WAIT=46;////
-    localparam EXEC_STATE_ALU_OPERAND_2_DIR_2_WAIT=47;////
+    localparam EXEC_STATE_ALU_OPERAND_1_DIR_1_WAIT=45;
+    localparam EXEC_STATE_ALU_OPERAND_2_DIR_1_WAIT=46;
+    localparam EXEC_STATE_ALU_OPERAND_2_DIR_2_WAIT=47;
     localparam EXEC_STATE_ALU_IND_WRITE_1_WAIT=48;
     localparam EXEC_STATE_ALU_OPERAND_1_IND_1_WAIT=49;
     localparam EXEC_STATE_ALU_OPERAND_2_IND_1_WAIT=50;
 
-    localparam EXEC_STATE_IN=50+1;
-    localparam EXEC_STATE_IN_DIR=51+1;
-    localparam EXEC_STATE_IN_IND_1=52+1;
-    localparam EXEC_STATE_IN_IND_2=53+1;
-    localparam EXEC_STATE_IN_WRITE=54+1;
-    localparam EXEC_STATE_IN_SET_STATUS=55+1;
-    localparam EXEC_STATE_IN_CHECK_STATUS=56+1;
-    localparam EXEC_STATE_IN_IND_3=57+1;
+    localparam EXEC_STATE_IN=51;
+    localparam EXEC_STATE_IN_DIR=52;
+    localparam EXEC_STATE_IN_IND_1=53;
+    localparam EXEC_STATE_IN_IND_2=54;
+    localparam EXEC_STATE_IN_WRITE=55;
+    localparam EXEC_STATE_IN_SET_STATUS=56;
+    localparam EXEC_STATE_IN_CHECK_STATUS=57;
+    localparam EXEC_STATE_IN_IND_3=58;
     localparam EXEC_STATE_IN_IND_1_WAIT=59;
 
     localparam EXEC_STATE_OUT=60;
@@ -288,6 +254,44 @@ module cpu #(
     localparam EXEC_STATE_STOP_CHECK_OP_2_WAIT=104;
     localparam EXEC_STATE_STOP_CHECK_OP_3_WAIT=105;
     localparam EXEC_STATE_STOP_OUT_OP_3_1=106;
+
+   localparam EXEC_STATE_MOV_FETCH_IR_LOW=110;       
+   localparam EXEC_STATE_MOV_FETCH_IR_LOW_2=111;     
+   localparam EXEC_STATE_MOV_FETCH_IR_LOW_3=112;     
+   localparam EXEC_STATE_MOV_TWO_WORDED=113;     
+   localparam EXEC_STATE_MOV_TWO_WORDED_DIR=114;     
+   localparam EXEC_STATE_MOV_TWO_WORDED_DIR_WR=115;      
+   localparam EXEC_STATE_MOV_TWO_WORDED_IND=116;     
+   localparam EXEC_STATE_MOV_TWO_WORDED_IND_2=117;       
+   localparam EXEC_STATE_MOV_TWO_WORDED_IND_3=118;       
+   localparam EXEC_STATE_MOV_TWO_WORDED_IND_WAIT=119;        
+   localparam EXEC_STATE_MOV_TWO_WORDED_IND_WR=120;      
+
+
+    localparam EXEC_STATE_BEG=130;
+    localparam EXEC_STATE_BEG_BOTH=131;
+    localparam EXEC_STATE_BEG_BOTH_DIR_OP1=132;
+    localparam EXEC_STATE_BEG_BOTH_DIR_OP1_2=133;
+    localparam EXEC_STATE_BEG_BOTH_DIR_OP1_WAIT=134;
+    localparam EXEC_STATE_BEG_BOTH_DIR_OP2=135;
+    localparam EXEC_STATE_BEG_BOTH_DIR_OP2_WAIT=136;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP1=137;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP1_2=138;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP1_3=139;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP1_3_WAIT=140;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP1_4=141;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP1_WAIT=142;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP2=143;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP2_2=144;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP2_3=145;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP2_3_WAIT=146;
+    localparam EXEC_STATE_BEG_BOTH_IND_OP2_WAIT=147;
+    localparam EXEC_STATE_BEG_BOTH_JUMP=148;
+    localparam EXEC_STATE_BEG_BOTH_OP2=149;
+    localparam EXEC_STATE_BEG_CHECK=150;
+    localparam EXEC_STATE_BEG_FETCH=151;
+    localparam EXEC_STATE_BEG_FETCH_1=152;
+    localparam EXEC_STATE_BEG_FETCH_2=153;
     
     
     localparam HALT=200;
@@ -298,7 +302,7 @@ module cpu #(
             status_reg<=1'b0;
             we_reg<=1'b0;
             out_reg<={DATA_WIDTH{1'b0}};
-            mdr_reg_seq<={DATA_WIDTH{1'b0}};
+            temporary_reg_seq<={DATA_WIDTH{1'b0}};
             operation_code_seq<=4'h0;
             operand_1_full_seq<=4'h0;
             operand_2_full_seq<=4'h0;
@@ -306,14 +310,14 @@ module cpu #(
             alu_operand_1_seq<={DATA_WIDTH{1'b0}};
             alu_operand_2_seq<={DATA_WIDTH{1'b0}};
             alu_oc_seq<=4'h0;
-
+            
         end
         else begin
             state_reg<=state_reg_next;
             status_reg<=status_reg_next;
             out_reg<=out_reg_next;
             we_reg<=we_reg_next;
-            mdr_reg_seq<=mdr_reg;
+            temporary_reg_seq<=temporary_reg;
             operation_code_seq<=operation_code;
             operand_1_full_seq<=operand_1_full;
             operand_2_full_seq<=operand_2_full;
@@ -344,7 +348,7 @@ module cpu #(
             we_reg_next=1'b0;
             state_reg_next=state_reg;
             out_reg_next=out_reg;
-            mdr_reg=mdr_reg_seq;
+            temporary_reg=temporary_reg_seq;
             status_reg_next=status_reg;
             operation_code=operation_code_seq;
             operand_1_full=operand_1_full_seq;
@@ -355,14 +359,14 @@ module cpu #(
             alu_oc=alu_oc_seq;
 
         case(state_reg)
-//----------------------------------------------------------//
+//-------------------RESET_STATE---------------------------------------//
             RESET_STATE:begin
                 pc_in={ADDR_WIDTH{1'b0}}+PC_INITIAL_VALUE;
                 sp_in={ADDR_WIDTH{1'b0}}+SP_INITIAL_VALUE;
                 ld_trigger=PC_MASK | SP_MASK;
                 state_reg_next=FETCH_STATE_MAR_IN;
             end
-//----------------------------------------------------------//
+//---------------------FETCH_STATE-------------------------------------//
             FETCH_STATE_MAR_IN:begin
                 state_reg_next=FETCH_STATE_MAR_IN1;
             end
@@ -385,7 +389,7 @@ module cpu #(
                 ld_trigger=IR_HIGH_MASK;
                 state_reg_next=DECODE_STATE;
             end
-//----------------------------------------------------------//
+//---------------------DECODE_STATE-------------------------------------//
             DECODE_STATE:begin
                 operation_code=ir_high_wire[15:12];
                 operand_1_full=ir_high_wire[11:8];
@@ -413,20 +417,23 @@ module cpu #(
                     STOP:begin
                         state_reg_next=EXEC_STATE_STOP;
                     end
-                   BEG:begin// BEQ MOD
-                       state_reg_next=EXEC_STATE_BEG;// BEQ MOD
-                   end// BEQ MOD
+                    BEG:begin
+                        state_reg_next=EXEC_STATE_BEG;
+                    end
+                
                     default:state_reg_next=RESET_STATE;
                 endcase
             end
-//----------------------------------------------------------//            
+//-----------------------MOV-----------------------------------//            
             EXEC_STATE_MOV:begin
-        //        if(operand_3_full==4'b1000)begin          //MOV MOD
-        //            mar_in=pc_wire;           //MOV MOD
-        //            ld_trigger=MAR_MASK;          //MOV MOD
-        //            state_reg_next=EXEC_STATE_MOV_FETCH_IR_LOW;           //MOV MOD
-        //        end           //MOV MOD
-            //    else          //MOV MOD
+        
+                if(operand_3_full==4'b1000)begin          
+                    mar_in=pc_wire;           
+                    ld_trigger=MAR_MASK;          
+                    state_reg_next=EXEC_STATE_MOV_FETCH_IR_LOW;           
+                end           
+                else          
+        
                 if(operand_3_full!=4'h0)begin
                     mar_in={3'h0,operand_1};
                     ld_trigger=MAR_MASK;
@@ -439,64 +446,65 @@ module cpu #(
                     if(operand_2_adr==1'b0)state_reg_next=EXEC_STATE_MOV_DIR_WAIT;
                     else state_reg_next=EXEC_STATE_MOV_IND_1_WAIT;
                 end
-            end            
-       //     EXEC_STATE_MOV_FETCH_IR_LOW:begin //MOV MOD
-       //         inc_trigger=PC_MASK;  //MOV MOD
-       //         state_reg_next=EXEC_STATE_MOV_FETCH_IR_LOW_2; //MOV MOD
-       //     end   //MOV MOD
-       //     EXEC_STATE_MOV_FETCH_IR_LOW_2:begin   //MOV MOD
-       //         mdr_in=mem;   //MOV MOD
-       //         ld_trigger=MDR_MASK;  //MOV MOD
-       //         state_reg_next=EXEC_STATE_MOV_FETCH_IR_LOW_3; //MOV MOD
-       //     end   //MOV MOD
-       //     EXEC_STATE_MOV_FETCH_IR_LOW_3:begin   //MOV MOD
-       //         ir_low_in=mdr_wire;   //MOV MOD
-       //         ld_trigger=IR_LOW_MASK;   //MOV MOD
-       //         state_reg_next=EXEC_STATE_MOV_TWO_WORDED; //MOV MOD
-       //     end   //MOV MOD
-       //     EXEC_STATE_MOV_TWO_WORDED:begin   //MOV MOD
-        //        if(operand_1_adr==MEMORY_DIRECT_ADR)begin //MOV MOD
-        //            mar_in={3'h0,operand_1};  //MOV MOD
-        //            ld_trigger=MAR_MASK;  //MOV MOD
-        //            state_reg_next=EXEC_STATE_MOV_TWO_WORDED_DIR; //MOV MOD
-        //        end   //MOV MOD
-        //        else begin    //MOV MOD
-        //            mar_in={3'h0,operand_1};  //MOV MOD
-        //            ld_trigger=MAR_MASK;  //MOV MOD
-        //            state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_WAIT;    //MOV MOD
-        //        end   //MOV MOD
-        //    end   //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_DIR:begin    //MOV MOD
-        //       mdr_in=ir_low_wire;    //MOV MOD
-        //       ld_trigger=MDR_MASK;   //MOV MOD
-        //       state_reg_next=EXEC_STATE_MOV_TWO_WORDED_DIR_WR;   //MOV MOD
-        //   end    //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_DIR_WR:begin //MOV MOD
-        //       we_reg_next=1'b1;  //MOV MOD
-        //       state_reg_next=FETCH_STATE_MAR_IN; //MOV MOD
-        //   end    //MOV MOD
-    //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_IND_WAIT:begin   //MOV MOD
-        //       state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND;  //MOV MOD
-        //   end    //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_IND:begin    //MOV MOD
-        //       mdr_reg=mem;   //MOV MOD
-        //       state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_2;    //MOV MOD
-        //   end    //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_IND_2:begin  //MOV MOD
-        //       mar_in=mdr_reg[5:0];   //MOV MOD
-        //       ld_trigger=MAR_MASK;   //MOV MOD
-        //       state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_3;    //MOV MOD
-        //   end    //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_IND_3:begin  //MOV MOD
-        //       mdr_in=ir_low_wire;    //MOV MOD
-        //       ld_trigger=MDR_MASK;   //MOV MOD
-        //       state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_WR;   //MOV MOD
-        //   end    //MOV MOD
-        //   EXEC_STATE_MOV_TWO_WORDED_IND_WR:begin //MOV MOD
-        //       we_reg_next=1'b1;  //MOV MOD
-        //       state_reg_next=FETCH_STATE_MAR_IN; //MOV MOD
-        //   end    //MOV MOD
+            end      
+            
+            EXEC_STATE_MOV_FETCH_IR_LOW:begin 
+                inc_trigger=PC_MASK;  
+                state_reg_next=EXEC_STATE_MOV_FETCH_IR_LOW_2; 
+            end   
+            EXEC_STATE_MOV_FETCH_IR_LOW_2:begin   
+                mdr_in=mem;   
+                ld_trigger=MDR_MASK;  
+                state_reg_next=EXEC_STATE_MOV_FETCH_IR_LOW_3; 
+            end   
+            EXEC_STATE_MOV_FETCH_IR_LOW_3:begin   
+                ir_low_in=mdr_wire;   
+                ld_trigger=IR_LOW_MASK;   
+                state_reg_next=EXEC_STATE_MOV_TWO_WORDED; 
+        end   
+        EXEC_STATE_MOV_TWO_WORDED:begin   
+            if(operand_1_adr==MEMORY_DIRECT_ADR)begin 
+                mar_in={3'h0,operand_1};  
+                ld_trigger=MAR_MASK;  
+                state_reg_next=EXEC_STATE_MOV_TWO_WORDED_DIR; 
+            end   
+            else begin    
+                mar_in={3'h0,operand_1};  
+                ld_trigger=MAR_MASK;  
+                state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_WAIT;    
+            end   
+        end   
+       EXEC_STATE_MOV_TWO_WORDED_DIR:begin    
+           mdr_in=ir_low_wire;    
+           ld_trigger=MDR_MASK;   
+           state_reg_next=EXEC_STATE_MOV_TWO_WORDED_DIR_WR;   
+       end    
+       EXEC_STATE_MOV_TWO_WORDED_DIR_WR:begin 
+           we_reg_next=1'b1;  
+           state_reg_next=FETCH_STATE_MAR_IN; 
+       end    
+    
+       EXEC_STATE_MOV_TWO_WORDED_IND_WAIT:begin   
+           state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND;  
+       end    
+       EXEC_STATE_MOV_TWO_WORDED_IND:begin    
+           temporary_reg=mem;   
+           state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_2;    
+       end    
+       EXEC_STATE_MOV_TWO_WORDED_IND_2:begin  
+           mar_in=temporary_reg[5:0];   
+           ld_trigger=MAR_MASK;   
+           state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_3;    
+       end    
+       EXEC_STATE_MOV_TWO_WORDED_IND_3:begin  
+           mdr_in=ir_low_wire;    
+           ld_trigger=MDR_MASK;   
+           state_reg_next=EXEC_STATE_MOV_TWO_WORDED_IND_WR;   
+       end    
+       EXEC_STATE_MOV_TWO_WORDED_IND_WR:begin 
+           we_reg_next=1'b1;  
+           state_reg_next=FETCH_STATE_MAR_IN; 
+       end    
 
             EXEC_STATE_MOV_DIR_WAIT:begin
                 state_reg_next=EXEC_STATE_MOV_DIR;
@@ -509,7 +517,7 @@ module cpu #(
             EXEC_STATE_MOV_IND_1_WAIT:
                 state_reg_next=EXEC_STATE_MOV_IND_1;
             EXEC_STATE_MOV_IND_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_MOV_IND_2;
             end
             EXEC_STATE_MOV_IND_2:begin
@@ -532,7 +540,7 @@ module cpu #(
                     else begin
                         mar_in={4'h0,operand_2};
                         ld_trigger=MAR_MASK;
-                        mdr_reg=mdr_wire;
+                        temporary_reg=mdr_wire;
                         state_reg_next=EXEC_STATE_MOV_DST_IND_1_WAIT;
                     end
                 end
@@ -545,7 +553,7 @@ module cpu #(
                     else begin
                         mar_in={3'h0,operand_1};
                         ld_trigger=MAR_MASK;
-                        mdr_reg=mdr_wire;
+                        temporary_reg=mdr_wire;
                         state_reg_next=EXEC_STATE_MOV_DST_IND_1_WAIT;
                     end
                 end
@@ -557,11 +565,11 @@ module cpu #(
             EXEC_STATE_MOV_DST_IND_1_WAIT:
                 state_reg_next=EXEC_STATE_MOV_DST_IND_1;
             EXEC_STATE_MOV_DST_IND_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_MOV_DST_IND_2;
             end
             EXEC_STATE_MOV_DST_IND_2:begin
-                mar_in=mdr_reg[5:0];
+                mar_in=temporary_reg[5:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_MOV_DST_IND_3;
             end
@@ -569,7 +577,8 @@ module cpu #(
                 we_reg_next=1'b1;
                 state_reg_next=FETCH_STATE_MAR_IN;
             end
-//----------------------------------------------------------//     
+//-------------------------BEG---------------------------------//     
+
             EXEC_STATE_BEG:begin
                 mar_in=pc_wire;
                 ld_trigger=MAR_MASK;
@@ -619,11 +628,11 @@ module cpu #(
                 state_reg_next=EXEC_STATE_BEG_BOTH_IND_OP1;
             end
             EXEC_STATE_BEG_BOTH_IND_OP1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_BEG_BOTH_IND_OP1_2;
             end
             EXEC_STATE_BEG_BOTH_IND_OP1_2:begin
-                mar_in=mdr_reg[5:0];
+                mar_in=temporary_reg[5:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_BEG_BOTH_IND_OP1_3_WAIT;
             end
@@ -662,11 +671,11 @@ module cpu #(
                 state_reg_next=EXEC_STATE_BEG_BOTH_IND_OP2;
             end
             EXEC_STATE_BEG_BOTH_IND_OP2:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_BEG_BOTH_IND_OP2_2;
             end
             EXEC_STATE_BEG_BOTH_IND_OP2_2:begin
-                mar_in=mdr_reg[5:0];
+                mar_in=temporary_reg[5:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_BEG_BOTH_IND_OP2_3_WAIT;
             end
@@ -705,7 +714,7 @@ module cpu #(
                 end
             end
      
-//----------------------------------------------------------//     
+//------------------------ALU----------------------------------//     
             EXEC_STATE_ALU:begin
                 if(operand_2_adr==MEMORY_DIRECT_ADR)begin
                     mar_in={3'h0,operand_2};
@@ -715,18 +724,18 @@ module cpu #(
                 else begin
                     mar_in={3'h0,operand_2};
                     ld_trigger=MAR_MASK;
-                    mdr_reg=mdr_wire;
+                    temporary_reg=mdr_wire;
                     state_reg_next=EXEC_STATE_ALU_OPERAND_1_IND_1_WAIT;
                 end
             end
             EXEC_STATE_ALU_OPERAND_1_IND_1_WAIT:
                 state_reg_next=EXEC_STATE_ALU_OPERAND_1_IND_1;
             EXEC_STATE_ALU_OPERAND_1_IND_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_ALU_OPERAND_1_IND_2; 
             end
             EXEC_STATE_ALU_OPERAND_1_IND_2:begin
-                mar_in=mdr_reg[5:0];
+                mar_in=temporary_reg[5:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_ALU_OPERAND_1_DIR_1_WAIT; 
             end
@@ -748,18 +757,18 @@ module cpu #(
                     else begin
                         mar_in={3'h0,operand_3};
                         ld_trigger=MAR_MASK;
-                        mdr_reg=mdr_wire;
+                        temporary_reg=mdr_wire;
                         state_reg_next=EXEC_STATE_ALU_OPERAND_2_IND_1_WAIT;
                     end
             end
             EXEC_STATE_ALU_OPERAND_2_IND_1_WAIT:
                 state_reg_next=EXEC_STATE_ALU_OPERAND_2_IND_1;
             EXEC_STATE_ALU_OPERAND_2_IND_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_ALU_OPERAND_2_IND_2; 
             end
             EXEC_STATE_ALU_OPERAND_2_IND_2:begin
-                mar_in=mdr_reg[5:0];
+                mar_in=temporary_reg[5:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_ALU_OPERAND_2_DIR_1_WAIT; 
             end
@@ -795,11 +804,11 @@ module cpu #(
             EXEC_STATE_ALU_IND_WRITE_1_WAIT:
                 state_reg_next=EXEC_STATE_ALU_IND_WRITE_1;
             EXEC_STATE_ALU_IND_WRITE_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 state_reg_next=EXEC_STATE_ALU_IND_WRITE_2;
             end
             EXEC_STATE_ALU_IND_WRITE_2:begin
-                mar_in=mdr_reg[ADDR_WIDTH-1:0];
+                mar_in=temporary_reg[ADDR_WIDTH-1:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_ALU_WRITE;
             end
@@ -807,16 +816,17 @@ module cpu #(
                 we_reg_next=1'b1;
                 state_reg_next=FETCH_STATE_MAR_IN;
             end
-//----------------------------------------------------------//
-            EXEC_STATE_IN_SET_STATUS:begin
+//---------------------------IN-------------------------------//
+            EXEC_STATE_IN_SET_STATUS:begin      
                 status_reg_next=1'b1;
                 state_reg_next=EXEC_STATE_IN_CHECK_STATUS;
             end
-            EXEC_STATE_IN_CHECK_STATUS:begin
-                if(status_reg==1'b1)state_reg_next=EXEC_STATE_IN;
+            EXEC_STATE_IN_CHECK_STATUS:begin        //control bit je ispitni deo, za po2 mod obrisati condition
+                if(status_reg==1'b1 && control==1'b1)state_reg_next=EXEC_STATE_IN;
                 else state_reg_next=EXEC_STATE_IN_CHECK_STATUS;
             end
             EXEC_STATE_IN:begin
+                status_reg_next=1'b0;
                 mar_in={3'b0,operand_1};
                 ld_trigger=MAR_MASK;
                 if(operand_1_adr==MEMORY_DIRECT_ADR)begin
@@ -834,7 +844,7 @@ module cpu #(
             EXEC_STATE_IN_IND_1_WAIT:
                 state_reg_next=EXEC_STATE_IN_IND_1;
             EXEC_STATE_IN_IND_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 ld_trigger=MDR_MASK;
                 state_reg_next=EXEC_STATE_IN_IND_2;
             end
@@ -847,9 +857,10 @@ module cpu #(
             end
             EXEC_STATE_IN_WRITE:begin
                 we_reg_next=1'b1;
+                status_reg_next=1'b0; //ispit, za po2 mod izbaciti liniju
                 state_reg_next=FETCH_STATE_MAR_IN;
             end
-//----------------------------------------------------------//
+//---------------------------OUT-------------------------------//
            EXEC_STATE_OUT :begin
                 mar_in={3'b0,operand_1};
                 ld_trigger=MAR_MASK;
@@ -863,12 +874,12 @@ module cpu #(
             EXEC_STATE_OUT_IND_1_WAIT:
                 state_reg_next=EXEC_STATE_OUT_IND_1;
             EXEC_STATE_OUT_IND_1:begin
-                mdr_reg=mem;
+                temporary_reg=mem;
                 ld_trigger=MDR_MASK;
                 state_reg_next=EXEC_STATE_OUT_IND_2;
             end
             EXEC_STATE_OUT_IND_2:begin
-                mar_in=mdr_reg[ADDR_WIDTH-1:0];
+                mar_in=temporary_reg[ADDR_WIDTH-1:0];
                 ld_trigger=MAR_MASK;
                 state_reg_next=EXEC_STATE_OUT_2;
             end
@@ -890,7 +901,7 @@ module cpu #(
                out_reg_next=mdr_wire;
                 state_reg_next=FETCH_STATE_MAR_IN;
             end
-//----------------------------------------------------------//
+//--------------------------STOP--------------------------------//
             EXEC_STATE_STOP:begin
                 if(operand_1_full==4'h0 && operand_2_full==4'h0 && operand_2_full==4'h0)begin
                     state_reg_next=HALT;

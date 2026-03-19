@@ -1,4 +1,3 @@
-src/synthesis/modules/m21_dataflow.v
 src/synthesis/modules/red.v
 src/synthesis/modules/debouncer.v
 src/synthesis/modules/bcd.v

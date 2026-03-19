@@ -3,85 +3,54 @@ module ps2(
     input rst_n,
     input ps2_clk,
     input ps2_data,
-    output [15:0] code
+    output reg [15:0] code,
+    output ps2_cln
 );
 
-reg [15:0]code_reg;
-
-wire[15:0]code_wire;
-
-reg [15:0]code_reg_next;
-
-reg ps2_clk_sync0;
-reg ps2_clk_sync1;
-reg [2:0]state_reg;
-reg[2:0]state_reg_next;
-reg [3:0]n;
-reg[3:0]n_next;
+assign ps2_cln=ps2_clk_clean;
+reg [3:0]cnt;
 reg[7:0]data_reg;
-reg[7:0]data_reg_next;
+wire ps2_clk_red;
 
-assign code=code_wire;
-assign code_wire=code_reg;
+wire ps2_clk_inv;
+assign ps2_clk_inv=~ps2_clk;
+wire ps2_clk_clean;
 
-localparam START_BIT=0;
-localparam END_BIT=1;
-localparam INITIATE=0;
-localparam READ=1;
-localparam SEND=2;
+red red_clk(.clk(clk),.rst_n(rst_n),.in(ps2_clk_inv),.out(ps2_clk_red));
+debouncer deb(.clk(clk),.rst_n(rst_n),.in(ps2_clk),.out(ps2_clk_clean));
 
-always @(posedge clk or negedge rst_n) begin
-    if(!rst_n) begin
-        code_reg<=16'h0000;
-        state_reg<=3'h0;
-        n<=4'h0;
+reg ps2_clk_sync0, ps2_clk_sync1, ps2_clk_sync2;
+
+always @(posedge clk) begin
+    ps2_clk_sync0 <= ps2_clk_clean;
+    ps2_clk_sync1 <= ps2_clk_sync0;
+    ps2_clk_sync2 <= ps2_clk_sync1;
+end
+
+wire ps2_clk_falling_edge = (ps2_clk_sync2 && !ps2_clk_sync1);
+
+always@(posedge clk,negedge rst_n)begin
+    if (!rst_n)begin
+        cnt<=4'h0;
+        code<=16'h0000;
         data_reg<=8'h00;
     end
     else begin
-        code_reg<=code_reg_next;
-        state_reg<=state_reg_next;
-        n<=n_next;
-        data_reg<=data_reg_next;
+        if (ps2_clk_falling_edge)begin
+            if(cnt==4'h0 || cnt==4'h9)cnt<=cnt+4'h1;
+            else if(cnt<9)begin
+                data_reg<={ps2_data,data_reg[7:1]};
+                cnt<=cnt+4'h1;
+            end
+            else begin
+                code<={code[7:0],data_reg};
+                cnt<=4'h0;
+            end
+        end
+    
     end
 end
 
-always @(negedge ps2_clk) begin
-    code_reg_next<=code_reg;
-    state_reg_next<=state_reg;
-    n_next=n;
-    data_reg_next=data_reg;
 
-    case(state_reg)
-        INITIATE:begin
-            if(ps2_data==START_BIT)begin
-                n_next=4'd9;
-                state_reg_next=READ;
-            end
-            else;
-        end
-        READ:begin
-            if(n==4'h0 && ps2_data==END_BIT)begin
-                //next state
-                state_reg_next=SEND;
-            end
-            else if(n==4'h0 && ps2_data!=END_BIT)begin
-                //error
-                state_reg_next=INITIATE;
-            end
-            else if(n==4'h1)begin
-                //parity bit, do nothing
-                n_next=n_next-1;
-            end
-            else begin
-                data_reg_next={data_reg_next[6:0],ps2_data};
-                n_next=n_next-1;
-            end
-        end
-        SEND:begin
-            code_reg_next={code_reg_next[7:0],data_reg};
-            state_reg_next=INITIATE;
-        end
-        default:state_reg_next=INITIATE;
-    endcase
-end
+
 endmodule

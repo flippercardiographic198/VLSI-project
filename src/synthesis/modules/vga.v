@@ -45,7 +45,6 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-// HSYNC
 always @(*) begin
     if(h_cnt >= H_DISPLAY+H_FRONT && h_cnt < H_DISPLAY+H_FRONT+H_SYNC)
         hsync = 0;
@@ -53,7 +52,6 @@ always @(*) begin
         hsync = 1;
 end
 
-// VSYNC
 always @(*) begin
     if(v_cnt >= V_DISPLAY+V_FRONT && v_cnt < V_DISPLAY+V_FRONT+V_SYNC)
         vsync = 0;
